@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Task;
 use Illuminate\Http\Request;
+use App\Notifications\TaskUpdated;
 
 class TaskController extends Controller
 {
@@ -54,6 +55,7 @@ class TaskController extends Controller
     }
 
     $task->load(['classification', 'attachments']);
+$request->user()->notify(new TaskUpdated($task,'created'));
 
     return response()->json($task, 201);
 }
@@ -113,7 +115,8 @@ class TaskController extends Controller
 
 
     $task->load(['classification', 'attachments']);
-
+$changes = $task->getChanges();
+$request->user()->notify(new TaskUpdated($task,'updated',$changes));
     return response()->json($task);
 }
 
@@ -125,7 +128,7 @@ class TaskController extends Controller
     {
         $task = $request->user()->tasks()->findOrFail($id);
         $task->delete();
-
+        $request->user()->notify(new TaskUpdated($task,'deleted'));
         return response()->json(['message' => 'Task deleted successfully']);
     }
 }
